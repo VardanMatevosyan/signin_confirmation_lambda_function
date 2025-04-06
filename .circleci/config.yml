@@ -1,0 +1,155 @@
+version: 2.1
+
+orbs:
+  aws-cli: circleci/aws-cli@4.0
+  sam: circleci/aws-sam-serverless@6.1.0
+
+only-main-branch-filter: &only-main-branch-filter
+  filters:
+    branches:
+      only:
+        - main
+        - dev
+        - staging
+        - /^.*testing-deploy.*$/
+      ignore:
+        - feature/*
+
+executors:
+  java-executor:
+    docker:
+      - image: cimg/openjdk:21.0
+  node-executor:
+    docker:
+      - image: cimg/node:lts
+
+commands:
+  stage-env-evaluation-command:
+    description: "Setup circleCI stage environment values"
+    steps:
+      - run:
+          name: Setup stage environment
+          command: |
+            chmod +x .circleci/scripts/stage_environment_evaluation.sh
+            .circleci/scripts/stage_environment_evaluation.sh
+      - run:
+          name: Check STAGE value
+          command: |
+            echo "STAGE is: $STAGE"
+      - persist_to_workspace:
+          root: .
+          paths:
+            - ./env-vars.sh
+#  load-stage-env-command:
+#    description: "Load STAGE environment variables"
+#    steps:
+#      - run:
+#          name: Loading STAGE environment variables
+#          command: |
+#            echo "Loading STAGE environment variables"
+#            source ./env-vars.sh
+#            echo "STAGE is set to $STAGE"
+  build-app-command:
+    description: "Building signin_confirmation_lambda_function"
+    steps:
+      - run:
+          name: Build
+          command: gradle clean build -x test
+      - persist_to_workspace:
+          root: .
+          paths:
+            - build/
+      - run: ls -la build/
+  build-sam-app-command:
+    description: "Building signin_confirmation_lambda_function"
+    steps:
+      - attach_workspace:
+          at: .
+      - run:
+          name: Build dev SAM app
+          command: |
+            source ./env-vars.sh
+            echo "STAGE is set to ${STAGE}"
+            sed "s/STAGE_REPLACEMENT/${STAGE}/g" template.yaml > template-${STAGE}.yaml
+            sam build --template-file template-${STAGE}.yaml
+      - persist_to_workspace:
+          root: .
+          paths:
+            - .
+      - run: ls -la .
+      - run: ls -la build/
+
+jobs:
+  setup-stage-environments:
+    executor: node-executor
+    steps:
+      - checkout
+      - stage-env-evaluation-command
+  build-app-job:
+    executor: java-executor
+    steps:
+      - checkout
+      - build-app-command
+  build-sam-app-job:
+    executor: sam/default
+    steps:
+      - checkout
+      - aws-cli/setup
+      - sam/install
+      - build-sam-app-command
+  deploy-job:
+    executor: sam/default
+    steps:
+      - aws-cli/setup
+      - sam/install
+      - attach_workspace:
+          at: .
+      - run:
+          name: "Deploy with SAM"
+          command: |
+            ls -la .
+            ls -ls build/
+            source ./env-vars.sh
+            echo "STAGE is ${STAGE}"
+            sam deploy \
+              --stack-name "${SIGNIN_CONFIRMATION_LAMBDA_NAME_PREFIX}-${STAGE}" \
+              --s3-bucket "${SIGNIN_CONFIRMATION_LAMBDA_S3_BUCKET_PREFIX}-${STAGE}-${SIGNIN_CONFIRMATION_LAMBDA_S3_BUCKET_SUFFIX}" \
+              --capabilities CAPABILITY_NAMED_IAM \
+              --region "${AWS_DEFAULT_REGION}" \
+              --no-confirm-changeset \
+              --no-fail-on-empty-changeset
+
+workflows:
+  version: 2
+  build-and-deploy:
+    jobs:
+      - setup-stage-environments
+      - build-app-job:
+          requires:
+            - setup-stage-environments
+      - build-sam-app-job:
+          <<: *only-main-branch-filter
+          requires:
+            - build-app-job
+          context:
+            - aws-serverless-context
+      - deploy-job:
+          <<: *only-main-branch-filter
+          requires:
+            - build-sam-app-job
+          context:
+            - aws-serverless-context
+#      - sam/deploy:
+#          <<: *only-main-branch-filter
+#          requires:
+#            - build-sam-app-job
+#          context:
+#            - aws-serverless-context
+#          auth:
+#            - aws-cli/setup
+#          name: Deploy the lambda function
+#          template: ./.aws-sam/build/template.yml
+#          s3_bucket: $SIGNIN_CONFIRMATION_LAMBDA_S3_BUCKET_PREFIX-$STAGE-$SIGNIN_CONFIRMATION_LAMBDA_S3_BUCKET_SUFFIX
+#          stack_name: $SIGNIN_CONFIRMATION_LAMBDA_NAME_PREFIX-$STAGE
+#          capabilities: CAPABILITY_NAMED_IAM
+#          region: $AWS_DEFAULT_REGION

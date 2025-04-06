@@ -1,0 +1,70 @@
+plugins {
+    id 'java'
+    id 'io.quarkus'
+}
+
+repositories {
+    mavenCentral()
+    mavenLocal()
+}
+
+dependencies {
+    implementation enforcedPlatform("${quarkusPlatformGroupId}:${quarkusPlatformArtifactId}:${quarkusPlatformVersion}")
+    implementation enforcedPlatform("${quarkusPlatformGroupId}:quarkus-amazon-services-bom:${quarkusPlatformVersion}")
+
+    implementation 'io.quarkus:quarkus-amazon-lambda'
+    implementation 'io.quarkiverse.groovy:quarkus-groovy-junit5:3.19.2'
+    implementation 'software.amazon.awssdk:url-connection-client'
+//    implementation 'io.quarkiverse.amazonservices:quarkus-amazon-lambda'
+    implementation 'io.quarkiverse.amazonservices:quarkus-amazon-cognito-user-pools'
+    implementation 'io.quarkus:quarkus-hibernate-orm-panache'
+    implementation 'io.quarkus:quarkus-agroal'
+    implementation 'io.quarkus:quarkus-jdbc-postgresql'
+    implementation 'io.quarkus:quarkus-narayana-jta'
+    implementation 'org.postgresql:postgresql:42.7.4'
+    implementation 'io.quarkus:quarkus-arc'
+    implementation 'org.slf4j:slf4j-api:2.0.17'
+    implementation 'ch.qos.logback:logback-classic:1.5.18'
+    implementation 'net.logstash.logback:logstash-logback-encoder:7.4'
+//    implementation 'software.amazon.awssdk:cognitoidentityprovider:2.25.20'
+
+    testImplementation 'io.quarkus:quarkus-junit5'
+    testImplementation 'org.junit.jupiter:junit-jupiter'
+    testImplementation 'io.rest-assured:rest-assured'
+
+    compileOnly 'org.projectlombok:lombok:1.18.36'
+    annotationProcessor 'org.projectlombok:lombok:1.18.36'
+}
+
+group = 'demo'
+version = '1.0.0'
+
+java {
+    sourceCompatibility = JavaVersion.VERSION_21
+    targetCompatibility = JavaVersion.VERSION_21
+}
+
+tasks.withType(JavaCompile).configureEach {
+    options.encoding = 'UTF-8'
+    options.compilerArgs.add('-parameters')
+}
+
+tasks.withType(Test).configureEach {
+    systemProperty 'file.encoding', 'UTF-8'
+    systemProperty 'quarkus.log.console.enable', 'false'
+    systemProperty 'quarkus.log.file.enable', 'false'
+}
+
+tasks.withType(Jar).configureEach {
+    archiveClassifier.set("")
+    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+    manifest {
+        attributes(
+                'Main-Class': 'demo.lambda.SignInConfirmationHandler'
+        )
+    }
+}
+
+configurations.configureEach {
+    exclude group: 'org.jboss.slf4j', module: 'slf4j-jboss-logmanager'
+}

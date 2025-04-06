@@ -1,0 +1,112 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: SAM Template for signin_confirmation_lambda_function
+
+Globals:
+  Function:
+    Timeout: 20
+    MemorySize: 512
+
+Resources:
+  SignInConfirmationHandler:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: SignInConfirmationHandler
+      CodeUri: ./build/function.zip
+      Handler: io.quarkus.amazon.lambda.runtime.QuarkusStreamHandler::handleRequest
+      Role: !GetAtt SignInConfirmationLambdaExecutionRole.Arn
+      VpcConfig:
+        SecurityGroupIds:
+          - !Ref SignInConfirmationSecurityGroup
+        SubnetIds:
+          - !Sub "{{resolve:ssm:/demo-aws/STAGE_REPLACEMENT/ExistingVpcPrivateSubnet1A}}"
+          - !Sub "{{resolve:ssm:/demo-aws/STAGE_REPLACEMENT/ExistingVpcPrivateSubnet1B}}"
+      Runtime: java21
+      Architectures:
+        - x86_64
+      MemorySize: 512
+      Environment:
+        Variables:
+          DB_HOST_URL: !Sub "{{resolve:ssm:/demo-aws/RDS_ENDPOINT}}"
+          DB_USER: !Sub "{{resolve:ssm:/demo-aws/RDS_USERNAME}}"
+          DB_PASSWORD: !Sub "{{resolve:ssm:/demo-aws/RDS_PASSWORD}}"
+          DB_PORT: !Sub "{{resolve:ssm:/demo-aws/RDS_PORT}}"
+          COGNITO_USER_POOL_ID: !Sub "{{resolve:ssm:/demo-aws/COGNITO_USER_POOL_ID}}"
+#      Events:
+#        CognitoUserPool:
+#          Type: Cognito
+#          Properties:
+#            UserPool: !Sub '{{resolve:ssm:/demo-aws/IDP_USER_POOL_NAME}}'
+#            Trigger: PostConfirmation
+#  ----------------------------------------------------------------------------------------------------------
+#  Cognito event above should be referencing the Cognito User Pool resource in this template, and it will create the user pool.
+#  SAM does not support attaching the User Pool event trigger if the Resource is not provided in the template.
+#  If User Pool created in other template or for the different stack name then need to attach the lambda as User Pool trigger manually.
+
+  SignInConfirmationSecurityGroup:
+    Type: "AWS::EC2::SecurityGroup"
+    Properties:
+      GroupName: "SG Signin Confirmation Lambda Function"
+      GroupDescription: "Security group for Signin Confirmation Lambda Function"
+      VpcId: !Sub '{{resolve:ssm:/demo-aws/ExistingVPC}}'
+      SecurityGroupIngress:
+        - IpProtocol: "-1"
+          FromPort: 0
+          ToPort: 65535
+          CidrIp: "0.0.0.0/0"
+      SecurityGroupEgress:
+        - IpProtocol: "-1"
+          FromPort: 0
+          ToPort: 65535
+          CidrIp: "0.0.0.0/0"
+
+  SignInConfirmationLambdaExecutionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: signin-confirmation-lambda-execution-role
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - lambda.amazonaws.com
+            Action:
+              - sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+        - arn:aws:iam::aws:policy/AmazonRDSFullAccess
+      Policies:
+        - PolicyName: AuthTokenLambdaPolicy
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - ssm:GetParameter
+                Resource:
+                  - !Sub "arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/demo-aws/*"
+              - Effect: Allow
+                Action:
+                  - cognito-idp:DescribeUserPool
+                  - cognito-idp:UpdateUserPool
+                  - cognito-idp:AdminUpdateUserAttributes
+                  - cognito-idp:CreateGroup
+                  - cognito-idp:UpdateGroup
+                  - cognito-idp:ListGroups
+                  - cognito-idp:AdminListGroupsForUser
+                  - cognito-idp:AddCustomAttributes
+                  - cognito-idp:UpdateUserAttributes
+                Resource:
+                  - !Sub "arn:aws:cognito-idp:${AWS::Region}:${AWS::AccountId}:userpool/{{resolve:ssm:/demo-aws/COGNITO_USER_POOL_ID}}"
+              - Effect: Allow
+                Action:
+                  - ec2:CreateNetworkInterface
+                  - ec2:DescribeNetworkInterfaces
+                  - ec2:DeleteNetworkInterface
+                Resource: "*"
+
+Outputs:
+  SignInConfirmationHandler:
+    Description: "Signin Confirmation Lambda Function ARN"
+    Value: !GetAtt SignInConfirmationHandler.Arn
