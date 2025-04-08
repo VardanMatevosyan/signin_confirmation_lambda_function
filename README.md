@@ -1,4 +1,7 @@
-
+Documentation of the Application
+* [README_DEVELOPMENT_DOCUMENTATION_SOURCE.md](readme%2FREADME_DEVELOPMENT_DOCUMENTATION_SOURCE.md)
+* [README_QUARKUS.md](readme%2FREADME_QUARKUS.md)
+* [README_SAM.md](readme%2FREADME_SAM.md)
 
 To invoke lambda function locally passing the event from the base64 encoded payload 
 ```shell
