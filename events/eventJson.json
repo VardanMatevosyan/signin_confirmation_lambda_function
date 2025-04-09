@@ -1,0 +1,22 @@
+{
+  "version": "1",
+  "region": "eu-central-1",
+  "triggerSource": "PostConfirmation_ConfirmSignUp",
+  "userPoolId": "eu-central-1_1vzdfgGR5",
+  "userName": "google_1179929asdfadfg45gsdfg6506678",
+  "callerContext": {
+    "awsSdkVersion": "aws-java-sdk-2.31.10",
+    "clientId": "asdgeg45gewrgsdfger"
+  },
+  "request": {
+    "userAttributes": {
+      "sub": "sdfsf-f0d1-7088-dfgdfg-34b4dccf5da1",
+      "email_verified": "true",
+      "email": "user@gmail.com",
+      "name": "UserName Test",
+      "username": "Google_123"
+    }
+  },
+  "response": {}
+}
+

@@ -50,11 +50,11 @@ commands:
 #            source ./env-vars.sh
 #            echo "STAGE is set to $STAGE"
   build-app-command:
-    description: "Building signin_confirmation_lambda_function"
+    description: "Building Native Quarkus Image using Graal VM signin_confirmation_lambda_function"
     steps:
       - run:
           name: Build
-          command: gradle clean build -x test
+          command: ./gradlew build -Dquarkus.package.type=native -Dquarkus.native.container-build=true -x test
       - persist_to_workspace:
           root: .
           paths:
