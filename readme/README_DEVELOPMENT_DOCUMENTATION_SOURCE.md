@@ -37,13 +37,14 @@ for Cognito this can be used. Also NAT Gateway can be an option to try.
 
 * For building and deploying the SAM app using CircleCI the [aws-sam-serverless](https://circleci.com/developer/orbs/orb/circleci/aws-sam-serverless#commands-install)  Orb was used to simplify the integration and deployment.
 * The documentation contains different use cases with examples. Documentation describes the jobs, commands with the options that can be used.
-
+* To build native image using docker container with Remote Docker [CircleCi Remote Docker configuration](https://circleci.com/docs/building-docker-images/)
 
 ## Quarkus docs
 
 * [Mapping Configuration from properties file](https://quarkus.io/guides/config-mappings#config-mappings)
 * [Hibernate in Quarkus](https://quarkus.io/guides/hibernate-orm-panache)
-
+* [Quarkus and Gradle](https://quarkus.io/guides/gradle-tooling)
+* [Native Executable](https://quarkus.io/guides/building-native-image)
 
 ## Testing the authentication flow 
 

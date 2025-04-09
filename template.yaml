@@ -135,6 +135,6 @@ Resources:
                 Resource: "*"
 
 Outputs:
-  SignInConfirmationHandler:
+  SignInConfirmationHandlerNative:
     Description: "Signin Confirmation Lambda Function ARN"
-    Value: !GetAtt SignInConfirmationHandler.Arn
+    Value: !GetAtt SignInConfirmationHandlerNative.Arn

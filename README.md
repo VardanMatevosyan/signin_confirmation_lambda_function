@@ -20,6 +20,15 @@ or if quarkus CLI installed locally
 quarkus build --native --no-tests -Dquarkus.native.container-build=true
 ```
 
+To build the quarkus native app using Graal VM on CircleCI with Remote Docker (needed for native builder image)
+```shell
+./gradlew build \
+  -Dquarkus.native.enabled=true \
+  -Dquarkus.native.remote-container-build=true \
+  -Dquarkus.package.jar.enabled=false \
+  -x test
+```
+
 Build and Deploy with all needed args if no toml config applied 
 * Process file applying dynamic variables during CI/CD to replace STAGE or ENV variable
 * Build template file that was processed 
