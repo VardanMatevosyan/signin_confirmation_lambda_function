@@ -130,8 +130,11 @@ workflows:
   build-and-deploy:
     when: << pipeline.parameters.manual >>
     jobs:
-      - setup-stage-environments:
+      - setup-stage-environments
+      - hold:
           type: approval
+          requires:
+            - setup-stage-environments
       - build-app-job:
           requires:
             - setup-stage-environments
@@ -142,7 +145,6 @@ workflows:
           context:
             - aws-serverless-context
       - deploy-job:
-          type: approval
           <<: *only-main-branch-filter
           requires:
             - build-sam-app-job
