@@ -26,7 +26,6 @@ dependencies {
     implementation 'org.slf4j:slf4j-api:2.0.17'
     implementation 'ch.qos.logback:logback-classic:1.5.18'
     implementation 'net.logstash.logback:logstash-logback-encoder:7.4'
-//    implementation 'software.amazon.awssdk:cognitoidentityprovider:2.25.20'
 
     testImplementation 'io.quarkus:quarkus-junit5'
     testImplementation 'org.junit.jupiter:junit-jupiter'

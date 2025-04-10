@@ -8,12 +8,12 @@ Globals:
     MemorySize: 512
 
 Resources:
-  SignInConfirmationHandler:
+  SignInConfirmationHandlerNative:
     Type: AWS::Serverless::Function
     Properties:
-      FunctionName: SignInConfirmationHandler
+      FunctionName: SignInConfirmationHandlerNative
       CodeUri: ./build/function.zip
-      Handler: io.quarkus.amazon.lambda.runtime.QuarkusStreamHandler::handleRequest
+      Handler: handler_not_used_in_the_provided_runtime_for_the_native_image
       Role: !GetAtt SignInConfirmationLambdaExecutionRole.Arn
       VpcConfig:
         SecurityGroupIds:
@@ -21,7 +21,7 @@ Resources:
         SubnetIds:
           - !Sub "{{resolve:ssm:/demo-aws/STAGE_REPLACEMENT/ExistingVpcPrivateSubnet1A}}"
           - !Sub "{{resolve:ssm:/demo-aws/STAGE_REPLACEMENT/ExistingVpcPrivateSubnet1B}}"
-      Runtime: java21
+      Runtime: provided.al2023
       Architectures:
         - x86_64
       MemorySize: 512
@@ -42,6 +42,34 @@ Resources:
 #  Cognito event above should be referencing the Cognito User Pool resource in this template, and it will create the user pool.
 #  SAM does not support attaching the User Pool event trigger if the Resource is not provided in the template.
 #  If User Pool created in other template or for the different stack name then need to attach the lambda as User Pool trigger manually.
+
+
+
+#                      UNCOMMENT THIS FUNCTION IF SIMPLE JVM NEEDED FOR LAMBDA FUNCTION RUNTIME
+#  SignInConfirmationHandler:
+#    Type: AWS::Serverless::Function
+#    Properties:
+#      FunctionName: SignInConfirmationHandler
+#      CodeUri: ./build/function.zip
+#      Handler: io.quarkus.amazon.lambda.runtime.QuarkusStreamHandler::handleRequest
+#      Role: !GetAtt SignInConfirmationLambdaExecutionRole.Arn
+#      VpcConfig:
+#        SecurityGroupIds:
+#          - !Ref SignInConfirmationSecurityGroup
+#        SubnetIds:
+#          - !Sub "{{resolve:ssm:/demo-aws/STAGE_REPLACEMENT/ExistingVpcPrivateSubnet1A}}"
+#          - !Sub "{{resolve:ssm:/demo-aws/STAGE_REPLACEMENT/ExistingVpcPrivateSubnet1B}}"
+#      Runtime: java21
+#      Architectures:
+#        - x86_64
+#      MemorySize: 512
+#      Environment:
+#        Variables:
+#          DB_HOST_URL: !Sub "{{resolve:ssm:/demo-aws/RDS_ENDPOINT}}"
+#          DB_USER: !Sub "{{resolve:ssm:/demo-aws/RDS_USERNAME}}"
+#          DB_PASSWORD: !Sub "{{resolve:ssm:/demo-aws/RDS_PASSWORD}}"
+#          DB_PORT: !Sub "{{resolve:ssm:/demo-aws/RDS_PORT}}"
+#          COGNITO_USER_POOL_ID: !Sub "{{resolve:ssm:/demo-aws/COGNITO_USER_POOL_ID}}"
 
   SignInConfirmationSecurityGroup:
     Type: "AWS::EC2::SecurityGroup"
@@ -107,6 +135,6 @@ Resources:
                 Resource: "*"
 
 Outputs:
-  SignInConfirmationHandler:
+  SignInConfirmationHandlerNative:
     Description: "Signin Confirmation Lambda Function ARN"
-    Value: !GetAtt SignInConfirmationHandler.Arn
+    Value: !GetAtt SignInConfirmationHandlerNative.Arn

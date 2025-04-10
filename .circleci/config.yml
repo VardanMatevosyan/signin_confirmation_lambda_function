@@ -4,6 +4,11 @@ orbs:
   aws-cli: circleci/aws-cli@4.0
   sam: circleci/aws-sam-serverless@6.1.0
 
+parameters:
+  manual:
+    type: boolean
+    default: false
+
 only-main-branch-filter: &only-main-branch-filter
   filters:
     branches:
@@ -40,21 +45,18 @@ commands:
           root: .
           paths:
             - ./env-vars.sh
-#  load-stage-env-command:
-#    description: "Load STAGE environment variables"
-#    steps:
-#      - run:
-#          name: Loading STAGE environment variables
-#          command: |
-#            echo "Loading STAGE environment variables"
-#            source ./env-vars.sh
-#            echo "STAGE is set to $STAGE"
+
   build-app-command:
-    description: "Building signin_confirmation_lambda_function"
+    description: "Building Native Quarkus Image using Graal VM signin_confirmation_lambda_function"
     steps:
       - run:
           name: Build
-          command: gradle clean build -x test
+          command: | 
+            ./gradlew build \
+              -Dquarkus.native.enabled=true \
+              -Dquarkus.native.remote-container-build=true \
+              -Dquarkus.package.jar.enabled=false \
+              -x test
       - persist_to_workspace:
           root: .
           paths:
@@ -87,8 +89,12 @@ jobs:
       - stage-env-evaluation-command
   build-app-job:
     executor: java-executor
+    resource_class: medium
     steps:
       - checkout
+      - setup_remote_docker:
+          docker_layer_caching: true
+          version: edge
       - build-app-command
   build-sam-app-job:
     executor: sam/default
@@ -122,9 +128,11 @@ jobs:
 workflows:
   version: 2
   build-and-deploy:
+    when: << pipeline.parameters.manual >>
     jobs:
       - setup-stage-environments
       - build-app-job:
+          type: approval
           requires:
             - setup-stage-environments
       - build-sam-app-job:
@@ -139,17 +147,3 @@ workflows:
             - build-sam-app-job
           context:
             - aws-serverless-context
-#      - sam/deploy:
-#          <<: *only-main-branch-filter
-#          requires:
-#            - build-sam-app-job
-#          context:
-#            - aws-serverless-context
-#          auth:
-#            - aws-cli/setup
-#          name: Deploy the lambda function
-#          template: ./.aws-sam/build/template.yml
-#          s3_bucket: $SIGNIN_CONFIRMATION_LAMBDA_S3_BUCKET_PREFIX-$STAGE-$SIGNIN_CONFIRMATION_LAMBDA_S3_BUCKET_SUFFIX
-#          stack_name: $SIGNIN_CONFIRMATION_LAMBDA_NAME_PREFIX-$STAGE
-#          capabilities: CAPABILITY_NAMED_IAM
-#          region: $AWS_DEFAULT_REGION

@@ -3,13 +3,33 @@ Documentation of the Application
 * [README_QUARKUS.md](readme%2FREADME_QUARKUS.md)
 * [README_SAM.md](readme%2FREADME_SAM.md)
 
-To invoke lambda function locally passing the event from the base64 encoded payload 
+
+To build the quarkus app:
 ```shell
-aws --endpoint-url=http://localhost:9999 lambda invoke --function-name "SignInConfirmationHandler" --payload file://events/eventDataBase64.json output.json
+./gradlew build -x test 
 ```
 
+To build the quarkus native app using Graal VM:
 
-Deploy with all needed args if no toml config applied 
+```shell
+./gradlew build -Dquarkus.package.type=native -Dquarkus.native.container-build=true -x test
+```
+or if quarkus CLI installed locally
+
+```shell
+quarkus build --native --no-tests -Dquarkus.native.container-build=true
+```
+
+To build the quarkus native app using Graal VM on CircleCI with Remote Docker (needed for native builder image)
+```shell
+./gradlew build \
+  -Dquarkus.native.enabled=true \
+  -Dquarkus.native.remote-container-build=true \
+  -Dquarkus.package.jar.enabled=false \
+  -x test
+```
+
+Build and Deploy with all needed args if no toml config applied 
 * Process file applying dynamic variables during CI/CD to replace STAGE or ENV variable
 * Build template file that was processed 
 * Deploy project using built template file
@@ -17,6 +37,11 @@ Deploy with all needed args if no toml config applied
 sed 's/STAGE_REPLACEMENT/dev/g' template.yaml > template-dev.yaml
 sam build --template-file template-dev.yaml
 sam deploy --stack-name signin-confirmation-lambda-function-dev --s3-bucket signin-confirmation-lambda-dev-serverless-deployment --capabilities CAPABILITY_NAMED_IAM --region eu-central-1
+```
+
+To invoke lambda function locally passing the event from the base64 encoded payload
+```shell
+aws --endpoint-url=http://localhost:9999 lambda invoke --function-name "SignInConfirmationHandler" --payload file://events/eventDataBase64.json output.json
 ```
 
 
