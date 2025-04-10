@@ -137,7 +137,7 @@ workflows:
             - setup-stage-environments
       - build-app-job:
           requires:
-            - setup-stage-environments
+            - hold
       - build-sam-app-job:
           <<: *only-main-branch-filter
           requires:
