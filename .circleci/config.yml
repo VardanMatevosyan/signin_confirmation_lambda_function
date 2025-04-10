@@ -4,6 +4,11 @@ orbs:
   aws-cli: circleci/aws-cli@4.0
   sam: circleci/aws-sam-serverless@6.1.0
 
+parameters:
+  manual:
+    type: boolean
+    default: false
+
 only-main-branch-filter: &only-main-branch-filter
   filters:
     branches:
