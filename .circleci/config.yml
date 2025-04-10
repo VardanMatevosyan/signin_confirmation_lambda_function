@@ -130,9 +130,9 @@ workflows:
   build-and-deploy:
     when: << pipeline.parameters.manual >>
     jobs:
-      - setup-stage-environments:
-          type: approval
+      - setup-stage-environments
       - build-app-job:
+          type: approval
           requires:
             - setup-stage-environments
       - build-sam-app-job:
